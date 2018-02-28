@@ -10,7 +10,6 @@ import web
 import receive
 import reply
 import NetSQL
-import types
 class handle(object):
     def GET(self):
         try:
@@ -37,14 +36,16 @@ class handle(object):
                 if recMsg.MsgType == 'text':
                     try:
                         if recvtext.isdigit():#判断接收的是数字还是字符串
+                            #连接数据库获取评论信息
                             content = NetSQL.sqlitetest(recvtext)['txt'].encode('utf8') + "\n\n\n------来自网易云音乐评论------\n    %s"%(NetSQL.sqlitetest(recvtext)['footer'].encode('utf8'))#不转码报错ASCII
                             print(content)
+                            #new对象
                             replyMsg = reply.TextMsg(toUser, fromUser, content)
-                            return replyMsg.send()
+                            return replyMsg.send()#调用方法发送
                         else:
                             content = "请发送数字:1-104180\nhttp://daydayup11.cn/"
                             replyMsg = reply.TextMsg(toUser, fromUser, content)
-                            return replyMsg.send()
+                            return replyMsg.send()#发送XML格式数据
                     except Exception,e:
                         print("SendERR:",e)
                 if recMsg.MsgType == 'image':

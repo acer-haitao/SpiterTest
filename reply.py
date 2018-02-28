@@ -13,8 +13,11 @@ class Msg(object):
         return "success"
 
 class TextMsg(Msg):
-    try:
         def __init__(self, toUserName, fromUserName, content):
+            '''
+            1、 __dict__是一个字典，键是属性名，值为属性值。
+            2、foo(**{"a":2,"b":3,"c":4,"d":5})#**{"a":2,"b":3,"c":4,"d":5}是将字典里的每个值按照关键字传值的方式传给a,b,c,d
+            '''
             self.__dict = dict()
             self.__dict['ToUserName'] = toUserName
             self.__dict['FromUserName'] = fromUserName
@@ -32,8 +35,7 @@ class TextMsg(Msg):
             """
             print("发送消息:")
             return XmlForm.format(**self.__dict)
-    except Exception,e:
-        print("TextMsgErro:",e)
+
 
 class ImageMsg(Msg):
     def __init__(self, toUserName, fromUserName, mediaId):

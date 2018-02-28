@@ -11,9 +11,7 @@ from handle import handle
 urls = (
     '/','handle'    
     )
-#class index(object):
-#   def GET(self):
-#        return "Hello Test"
+
 if __name__ == "__main__":
     app = web.application(urls,globals())
     app.run()

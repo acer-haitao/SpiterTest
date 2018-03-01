@@ -14,6 +14,7 @@ def process_line(line,hist):
     for word in line.split():#根据空格将每一行分为每个单词
         word = word.strip(string.punctuation+string.whitespace)#将每个单词后面的标点符号和空格除去
         word = word.lower()#转成小写
+
         hist.append(word)#将单词添加到hist列表里
 with open('english.txt','r') as f:
     for line in f:

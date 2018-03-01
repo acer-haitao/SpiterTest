@@ -6,6 +6,7 @@
 # @Software: PyCharm
 import urllib
 import re
+import sqlite3
 import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -28,10 +29,19 @@ def find_all_page(html):
     page_all = re.findall(reg, html)
     num = re.sub("\D", "", page_all[0])#从共5页中提取数字
     return num
-def data_to_txt(str):
-    with open(u"51job北上广深python.txt",'a+') as f:
+def data_to_sqlite(id,job,company,address,wages,date,jobname):
+    db = sqlite3.connect("D:\Python-Test\WeiXin\db.sqlite3")
+    cursor = db.cursor()
+    sql = "insert into '51job'(job,company,address,wages,date,jobname) values (\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\");"%(job,company,address,wages,date,jobname)
+    try:
+        cursor.execute(sql)
+        db.commit()
+    except Exception as e:
+        print("ERRO:",e)
+def data_to_txt(str,jobname):
+    with open(u"51job%s.txt"%(jobname),'a+') as f:
         f.write(str)
-def print_items(data_items):
+def print_items(data_items,jobname):
     global i
     for data in data_items:
         job = data[0]
@@ -41,7 +51,8 @@ def print_items(data_items):
         date = data[4]
         i = i + 1
         str1 ="["+str(i)+"] "+ job+"--"+company+"--"+address+"--"+wages+"--"+date+"\n"
-        data_to_txt(str1)
+        data_to_txt(str1,jobname)
+        data_to_sqlite(id, job, company, address, wages, date,jobname)
         print(str1)
 
 def urlformat(urlstart):
@@ -56,26 +67,60 @@ def get_page_html(page_num,urlstart):
     return list
 
 if __name__ == '__main__':
-    #python
+    urldict=[
+        {
+            'jobname':"python",
+            'urlstart':'http://search.51job.com/list/010000,000000,0000,00,9,99,Python%25E5%25BC%2580%25E5%258F%2591%25E5%25B7%25A5%25E7%25A8%258B%25E5%25B8%2588,2,1.html?lang=c&stype=&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&providesalary=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
+        },
+        {
+            'jobname':u"嵌入式",
+            'urlstart': 'http://search.51job.com/list/010000,000000,0000,00,9,99,Python%25E5%25BC%2580%25E5%258F%2591%25E5%25B7%25A5%25E7%25A8%258B%25E5%25B8%2588,2,1.html?lang=c&stype=&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&providesalary=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
+        },
+        {
+            'jobname': u"云计算",
+            'urlstart': 'http://search.51job.com/list/010000,000000,0000,00,9,99,%25E4%25BA%2591%25E8%25AE%25A1%25E7%25AE%2597,2,1.html?lang=c&stype=1&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=1&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
+        },
+        {
+            'jobname': u"机器学习",
+            'urlstart': 'http://search.51job.com/list/010000,000000,0000,00,9,99,Python%25E5%25BC%2580%25E5%258F%2591%25E5%25B7%25A5%25E7%25A8%258B%25E5%25B8%2588,2,1.html?lang=c&stype=&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&providesalary=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
+        },
+        {
+            'jobname': u"人工智能",
+            'urlstart': 'http://search.51job.com/list/010000,000000,0000,00,9,99,%25E6%259C%25BA%25E5%2599%25A8%25E5%25AD%25A6%25E4%25B9%25A0,2,1.html?lang=c&stype=1&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=1&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
+        },
+        {
+            'jobname': u"自动驾驶",
+            'urlstart': 'http://search.51job.com/list/010000,000000,0000,00,9,99,%25E8%2587%25AA%25E5%258A%25A8%25E9%25A9%25BE%25E9%25A9%25B6,2,1.html?lang=c&stype=1&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=1&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
+        },
+        {
+            'jobname': u"北上广深python",
+            'urlstart': 'http://search.51job.com/list/010000%252C040000%252C020000%252C030200,000000,0000,00,9,99,python,2,1.html?lang=c&stype=1&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=1&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
+        },
+    ]
+
+    #jobname = "python"
     #urlstart = 'http://search.51job.com/list/010000,000000,0000,00,9,99,Python%25E5%25BC%2580%25E5%258F%2591%25E5%25B7%25A5%25E7%25A8%258B%25E5%25B8%2588,2,1.html?lang=c&stype=&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&providesalary=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
-    #嵌入式
+    #jobname = u"嵌入式"
     #urlstart = 'http://search.51job.com/list/010000,000000,0000,00,9,99,%25E5%25B5%258C%25E5%2585%25A5%25E5%25BC%258F%25E5%25BC%2580%25E5%258F%2591,2,1.html?lang=c&stype=&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&providesalary=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
-    #云计算
+    #jobname =u"云计算"
     #urlstart ='http://search.51job.com/list/010000,000000,0000,00,9,99,%25E4%25BA%2591%25E8%25AE%25A1%25E7%25AE%2597,2,1.html?lang=c&stype=1&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=1&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
-    #机器学习
+    #jobname =u"机器学习"
     #urlstart = 'http://search.51job.com/list/010000,000000,0000,00,9,99,%25E6%259C%25BA%25E5%2599%25A8%25E5%25AD%25A6%25E4%25B9%25A0,2,1.html?lang=c&stype=1&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=1&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
-    #人工智能
+    #jobname =u"人工智能"
     #urlstart = 'http://search.51job.com/list/010000,000000,0000,00,9,99,%25E4%25BA%25BA%25E5%25B7%25A5%25E6%2599%25BA%25E8%2583%25BD,2,1.html?lang=c&stype=1&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=1&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
-    #自动驾驶
+    #jobname =u"自动驾驶"
     #urlstart = 'http://search.51job.com/list/010000,000000,0000,00,9,99,%25E8%2587%25AA%25E5%258A%25A8%25E9%25A9%25BE%25E9%25A9%25B6,2,1.html?lang=c&stype=1&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=1&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
-    #北上广深python
-    urlstart = 'http://search.51job.com/list/010000%252C040000%252C020000%252C030200,000000,0000,00,9,99,python,2,1.html?lang=c&stype=1&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=1&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
-    html = url_input(urlstart)
-    all_page_num = int(find_all_page(html))
-    print("+++++++++++++++++%s++++++++++++++++++++"%(all_page_num))
-    urllist = get_page_html(all_page_num,urlstart)
-    for url in urllist:
-        html = url_input(url)
-        data_items = find_data(html)
-        print_items(data_items)
+    #jobname =u"北上广深python"
+    #urlstart = 'http://search.51job.com/list/010000%252C040000%252C020000%252C030200,000000,0000,00,9,99,python,2,1.html?lang=c&stype=1&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=1&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
+    for data in urldict:
+        jobname = data['jobname']
+        urlstart = data['urlstart']
+        html = url_input(urlstart)
+        all_page_num = int(find_all_page(html))
+        print("+++++++++++++++++%s++++++++++++++++++++"%(all_page_num))
+        urllist = get_page_html(all_page_num,urlstart)
+        for url in urllist:
+            html = url_input(url)
+            data_items = find_data(html)
+            print_items(data_items,jobname)
 

@@ -1,0 +1,11 @@
+CREATE TABLE "51jobtest" (
+"id"  INTEGER NOT NULL,
+"job"  varchar(512) NOT NULL,
+"company"  varchar(512) NOT NULL,
+"address"  varchar(512) NOT NULL,
+"wages"  varchar(256) NOT NULL,
+"date"  varchar(256) NOT NULL,
+"jobname"  varchar(256) NOT NULL ON CONFLICT IGNORE,
+PRIMARY KEY ("id" ASC),
+CONSTRAINT "dex" UNIQUE ("job" ASC, "company" ASC, "address" ASC, "wages" ASC, "date" ASC, "jobname" ASC) ON CONFLICT IGNORE
+);

@@ -9,6 +9,8 @@ import sqlite3
 import sys
 import urllib
 
+import xlwt
+
 from jobnameconfig import jobname, urlstart
 from urlconfig import urldict
 
@@ -16,6 +18,7 @@ reload(sys)
 sys.setdefaultencoding('utf8')#处理打印中文字体用Unicode编码
 
 i = 0#统计爬取总条目
+j = 1
 def url_input(url):
     """
     获取网页源码html信息
@@ -28,7 +31,11 @@ def find_data(html):
     """
     用正则表达式获取需要的信息
     """
-    reg = re.compile(r'class="t1 ">.*?<a target="_blank" title="(.*?)".*?<span class="t2"><a target="_blank" title="(.*?)".*?<span class="t3">(.*?)</span>.*?<span class="t4">(.*?)</span>.*?<span class="t5">(.*?)</span>',re.S)
+    # reg = re.compile(r'class="t1 ">.*?<a target="_blank" title="(.*?)".*?<span class="t2"><a target="_blank" title="(.*?)".*?<span class="t3">(.*?)</span>.*?<span class="t4">(.*?)</span>.*?<span class="t5">(.*?)</span>',re.S)
+    reg = re.compile(
+            r'class="t1 ">.*?<a target="_blank" title="(.*?)".*?href="(.*?)".*?<span class="t2"><a target="_blank" title="(.*?)".*?href="(.*?)".*?<span class="t3">(.*?)</span>.*?<span class="t4">(.*?)</span>.*?<span class="t5">(.*?)</span>',
+            re.S)
+
     items = re.findall(reg,html)
     return items
 
@@ -41,14 +48,57 @@ def find_all_page(html):
     num = re.sub("\D", "", page_all[0])#从共5页中提取数字
     return num
 
-def data_to_sqlite(id,job,company,address,wages,date,jobname):
+
+# 一个例子掌握xlwt,设计要求见README文档
+def set_style(name, height, bold=False):
+    # 这部分设置字体样式
+    style = xlwt.XFStyle()  # 初始化样式
+    font = xlwt.Font()  # 为样式创建字体
+    font.name = name  # 'Times New Roman'
+    font.bold = bold
+    font.color_index = 4
+    font.height = height
+    style.font = font
+    # 这部分设置居中格式
+    alignment = xlwt.Alignment()
+    alignment.horz = xlwt.Alignment.HORZ_CENTER  # 水平居中
+    alignment.vert = xlwt.Alignment.VERT_CENTER  # 垂直居中
+    style.alignment = alignment
+
+    return style
+
+
+def data_to_excel(filename, data_items):
+    try:
+        global j
+        workbook = xlwt.Workbook()  # 创建工作簿
+        sheet1 = workbook.add_sheet('sheet_name', cell_overwrite_ok=True)  # 创建sheet,第二参数用于确认同一个cell单元是否可以重设值
+        row0 = [u'职位', u'公司名称', u'地点', u'工资', u'日期', u'职位链接', u'其他岗位']
+        # 第一行
+        for i in range(0, len(row0)):
+            sheet1.write(0, i, row0[i], set_style('Times New Roman', 220, True))
+        # 从第二行开始写
+        for data in data_items:
+            list = {'0': 0, '1': 2, '2': 4, '3': 5, '4': 6, '5': 1, '6': 3}
+            for key, value in list.items():
+                sheet1.col(int(key)).width = 256 * len(data[value].encode('utf-8'))  # 计算每一列的宽度
+                sheet1.write(j, int(key), data[value], set_style('Times New Roman', 220, False))
+            j = j + 1  # 下一列
+
+        workbook.save(u'5122job%s.xls' % (jobname))
+    except Exception, e:
+        print("EXCELERRO:", e)
+        workbook.save(u'513job%s.xls' % (jobname))
+
+
+def data_to_sqlite(id, job, company, address, wages, date, jobname, joburl):
     """
     将信息存储到数据库
     """
     db = sqlite3.connect("D:\Python-Test\WeiXin\db.sqlite3")
     cursor = db.cursor()  # OR IGNORE重复数据会跳过
-    sql = "insert  OR IGNORE into '51jobtest'(job,company,address,wages,date,jobname) values (\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\");" % (
-    job, company, address, wages, date, jobname)
+    sql = "insert  OR IGNORE into '51jobtest'(job,company,address,wages,date,jobname,joburl) values (\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\");" % (
+        job, company, address, wages, date, jobname, joburl)
     # sql = "insert OR IGNORE  into '51jobtest'(job,company,address,wages,date,jobname) values (\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\");" % ("job", "company", "address", "wages", "date", "jobname")
     try:
         cursor.execute(sql)
@@ -70,14 +120,18 @@ def print_items(data_items,jobname):
     global i
     for data in data_items:
         job = data[0]
-        company = data[1]
-        address = data[2]
-        wages = data[3]
-        date = data[4]
+        company = data[2]
+        address = data[4]
+        wages = data[5]
+        date = data[6]
+        alljoburl = data[3]
+        thisjoburl = data[1]
         i = i + 1
-        str1 ="["+str(i)+"] "+ job+"--"+company+"--"+address+"--"+wages+"--"+date+"\n"
-        data_to_txt(str1,jobname)#存到文本
-        data_to_sqlite(id, job, company, address, wages, date,jobname)#存到数据库
+        str1 = "[" + str(
+                i) + "] " + job + "--" + company + "--" + address + "--" + wages + "--" + date + "--" + thisjoburl + "\n"
+        # data_to_txt(str1,jobname)#存到文本
+        # data_to_sqlite(id, job, company, address, wages, date,jobname,thisjoburl)#存到数据库
+        # data_to_excel(jobname, data_items)
         print(str1)
 
 
@@ -126,9 +180,10 @@ def one_job_get():
     for url in urllist:#从列表里迭代每一页url
         html = url_input(url)#获取页面url
         data_items = find_data(html)#查找信息返回职位等信息
-        print_items(data_items, jobname)#将信息存到文本信息和数据库
-    i = 0
+        print_items(data_items, jobname)  # 将信息存到文本信息和数据库
+    data_to_excel(jobname, data_items)
 
 if __name__ == '__main__':
-    all_job_get()
-    # one_job_get()
+    # all_job_get()
+    one_job_get()
+    #data_to_excel('test')

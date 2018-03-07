@@ -33,4 +33,8 @@ urldict = [
         'jobname': u"北上广深python",
         'urlstart': 'http://search.51job.com/list/010000%252C040000%252C020000%252C030200,000000,0000,00,9,99,python,2,1.html?lang=c&stype=1&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=1&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
     },
+    {
+        'jobname': u"BJC#",
+        'urlstart': 'http://search.51job.com/list/010000,000000,0000,00,9,99,C%2523,2,1.html?lang=c&stype=1&postchannel=0000&workyear=99&cotype=99&degreefrom=99&jobterm=99&companysize=99&lonlat=0%2C0&radius=-1&ord_field=0&confirmdate=9&fromType=1&dibiaoid=0&address=&line=&specialarea=00&from=&welfare='
+    },
 ]

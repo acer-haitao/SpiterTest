@@ -64,31 +64,24 @@ def set_style(name, height, bold=False):
     alignment.horz = xlwt.Alignment.HORZ_CENTER  # 水平居中
     alignment.vert = xlwt.Alignment.VERT_CENTER  # 垂直居中
     style.alignment = alignment
-
     return style
 
 
-def data_to_excel(filename, data_items):
+def data_to_excel(filename, data_items, sheet1, workbook):
     try:
         global j
-        workbook = xlwt.Workbook()  # 创建工作簿
-        sheet1 = workbook.add_sheet('sheet_name', cell_overwrite_ok=True)  # 创建sheet,第二参数用于确认同一个cell单元是否可以重设值
-        row0 = [u'职位', u'公司名称', u'地点', u'工资', u'日期', u'职位链接', u'其他岗位']
-        # 第一行
-        for i in range(0, len(row0)):
-            sheet1.write(0, i, row0[i], set_style('Times New Roman', 220, True))
         # 从第二行开始写
-        for data in data_items:
+        for data in data_items:  # 在循环里放入style设置报错more than 4094 xfs
             list = {'0': 0, '1': 2, '2': 4, '3': 5, '4': 6, '5': 1, '6': 3}
             for key, value in list.items():
                 sheet1.col(int(key)).width = 256 * len(data[value].encode('utf-8'))  # 计算每一列的宽度
-                sheet1.write(j, int(key), data[value], set_style('Times New Roman', 220, False))
+                sheet1.write(j, int(key), data[value])
             j = j + 1  # 下一列
-
-        workbook.save(u'5122job%s.xls' % (jobname))
+        workbook.save(u'51job%s.xls' % (jobname))
     except Exception, e:
         print("EXCELERRO:", e)
-        workbook.save(u'513job%s.xls' % (jobname))
+        workbook.save(u'51EROjob%s.xls' % (jobname))
+        pass
 
 
 def data_to_sqlite(id, job, company, address, wages, date, jobname, joburl):
@@ -129,9 +122,8 @@ def print_items(data_items,jobname):
         i = i + 1
         str1 = "[" + str(
                 i) + "] " + job + "--" + company + "--" + address + "--" + wages + "--" + date + "--" + thisjoburl + "\n"
-        # data_to_txt(str1,jobname)#存到文本
-        # data_to_sqlite(id, job, company, address, wages, date,jobname,thisjoburl)#存到数据库
-        # data_to_excel(jobname, data_items)
+        data_to_txt(str1, jobname)  # 存到文本
+        data_to_sqlite(id, job, company, address, wages, date, jobname, thisjoburl)  #存到数据库
         print(str1)
 
 
@@ -169,6 +161,7 @@ def all_job_get():
             data_items = find_data(html)
             print_items(data_items, jobname)
         i = 0#批量抓取后换个职位重新计数
+
 def one_job_get():
     """
     单个职位信息抓取
@@ -177,13 +170,22 @@ def one_job_get():
     all_page_num = int(find_all_page(html))#从首页获取总共页数
     print("+++++++++++++++++%s++++++++++++++++++++" % (all_page_num))
     urllist = get_page_html(all_page_num, urlstart)#获取每一页url存到列表里
+
+    ####################################################
+    workbook = xlwt.Workbook()  # 创建工作簿
+    sheet1 = workbook.add_sheet('sheet_name', cell_overwrite_ok=True)  # 创建sheet,第二参数用于确认同一个cell单元是否可以重设值
+    row0 = [u'职位', u'公司名称', u'地点', u'工资', u'日期', u'职位链接', u'其他岗位']
+    # 第一行
+    for i in range(0, len(row0)):
+        sheet1.write(0, i, row0[i], set_style('Times New Roman', 220, True))
+    ####################################################
+
     for url in urllist:#从列表里迭代每一页url
         html = url_input(url)#获取页面url
         data_items = find_data(html)#查找信息返回职位等信息
         print_items(data_items, jobname)  # 将信息存到文本信息和数据库
-    data_to_excel(jobname, data_items)
+        data_to_excel(jobname, data_items, sheet1, workbook)
 
 if __name__ == '__main__':
-    # all_job_get()
-    one_job_get()
-    #data_to_excel('test')
+    all_job_get()
+    #one_job_get()

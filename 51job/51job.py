@@ -7,6 +7,7 @@
 import re
 import sqlite3
 import sys
+import time
 import urllib
 
 import xlwt
@@ -23,8 +24,13 @@ def url_input(url):
     """
     获取网页源码html信息
     """
-    get_html = urllib.urlopen(url)
-    read_html = get_html.read().decode('gbk')
+    num = 2
+    try:
+        get_html = urllib.urlopen(url)
+        read_html = get_html.read().decode('gbk')
+    except Exception as e:
+        print(e)
+        read_html = None
     return read_html
 
 def find_data(html):
@@ -49,6 +55,20 @@ def find_all_page(html):
     return num
 
 
+def find_txt(joburl):
+    time.sleep(3)
+    txt_html = url_input(joburl)
+    reg = re.compile(r'<div class="bmsg job_msg inbox">(.*?)<div class="mt10">', re.S)
+    txt_tmp1 = re.findall(reg, txt_html)
+    p = re.compile(r'<[^>]+>')
+    txt_tmp = p.sub('', str(txt_tmp1))
+
+    tmp = txt_tmp.decode('raw_unicode-escape').encode('utf-8').replace("u'", '', 1)
+    txt = tmp.replace("']", '').replace("[", '', 1).replace('\\t', '').replace('\\n', '').replace('', '').replace('\\r',
+                                                                                                                  '')
+    print(txt)
+    return txt
+
 # 一个例子掌握xlwt,设计要求见README文档
 def set_style(name, height, bold=False):
     # 这部分设置字体样式
@@ -67,7 +87,7 @@ def set_style(name, height, bold=False):
     return style
 
 
-def data_to_excel(filename, data_items, sheet1, workbook):
+def data_to_excel(filename, data_items, sheet1, workbook, jobtxt):
     try:
         global j
         # 从第二行开始写
@@ -78,7 +98,7 @@ def data_to_excel(filename, data_items, sheet1, workbook):
                 sheet1.write(j, int(key), data[value])
             j = j + 1  # 下一列
         workbook.save(u'51job%s.xls' % (jobname))
-    except Exception, e:
+    except Exception as e:
         print("EXCELERRO:", e)
         workbook.save(u'51EROjob%s.xls' % (jobname))
         pass
@@ -88,9 +108,9 @@ def data_to_sqlite(id, job, company, address, wages, date, jobname, joburl):
     """
     将信息存储到数据库
     """
-    db = sqlite3.connect("D:\Python-Test\WeiXin\db.sqlite3")
+    db = sqlite3.connect("D:\Python-Test\StuProject\db.sqlite3")
     cursor = db.cursor()  # OR IGNORE重复数据会跳过
-    sql = "insert  OR IGNORE into '51jobtest'(job,company,address,wages,date,jobname,joburl) values (\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\");" % (
+    sql = "insert  OR IGNORE into 'job51_job51'(job,company,address,wages,date,jobname,joburl) values (\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\");" % (
         job, company, address, wages, date, jobname, joburl)
     # sql = "insert OR IGNORE  into '51jobtest'(job,company,address,wages,date,jobname) values (\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\");" % ("job", "company", "address", "wages", "date", "jobname")
     try:
@@ -120,11 +140,13 @@ def print_items(data_items,jobname):
         alljoburl = data[3]
         thisjoburl = data[1]
         i = i + 1
+        # jobtxt = find_txt(thisjoburl)
         str1 = "[" + str(
                 i) + "] " + job + "--" + company + "--" + address + "--" + wages + "--" + date + "--" + thisjoburl + "\n"
         data_to_txt(str1, jobname)  # 存到文本
         data_to_sqlite(id, job, company, address, wages, date, jobname, thisjoburl)  #存到数据库
         print(str1)
+        #return jobtxt
 
 
 def urlformat(urlstart):
@@ -160,6 +182,7 @@ def all_job_get():
             html = url_input(url)
             data_items = find_data(html)
             print_items(data_items, jobname)
+        time.sleep(1)
         i = 0#批量抓取后换个职位重新计数
 
 def one_job_get():
@@ -174,7 +197,7 @@ def one_job_get():
     ####################################################
     workbook = xlwt.Workbook()  # 创建工作簿
     sheet1 = workbook.add_sheet('sheet_name', cell_overwrite_ok=True)  # 创建sheet,第二参数用于确认同一个cell单元是否可以重设值
-    row0 = [u'职位', u'公司名称', u'地点', u'工资', u'日期', u'职位链接', u'其他岗位']
+    row0 = [u'职位', u'公司名称', u'地点', u'工资', u'日期', u'职位链接', u'其他岗位', u'职位要求']
     # 第一行
     for i in range(0, len(row0)):
         sheet1.write(0, i, row0[i], set_style('Times New Roman', 220, True))
@@ -183,8 +206,8 @@ def one_job_get():
     for url in urllist:#从列表里迭代每一页url
         html = url_input(url)#获取页面url
         data_items = find_data(html)#查找信息返回职位等信息
-        print_items(data_items, jobname)  # 将信息存到文本信息和数据库
-        data_to_excel(jobname, data_items, sheet1, workbook)
+        jobtxt = print_items(data_items, jobname)  # 将信息存到文本信息和数据库
+        data_to_excel(jobname, data_items, sheet1, workbook, jobtxt)
 
 if __name__ == '__main__':
     all_job_get()

@@ -8,6 +8,7 @@ import json
 import re
 import sys
 
+import MySQLdb
 import requests
 
 reload(sys)
@@ -54,6 +55,19 @@ headers = {
 i = 0
 
 
+def add_mysql(itemName, price, sold, h5url, imgurl):
+    connect = MySQLdb.connect('mysql.litianqiang.com', 'novel', 'qiangzi()', 'test', port=7150, charset="utf8")
+    cursor = connect.cursor()
+    sql = 'insert into hduoduo(itemName,price,sold,h5url,imgurl) values("{itemName}","{price}","{sold}","{h5url}","{imgurl}")'.format(
+            itemName=itemName, price=price, sold=sold, h5url=h5url, imgurl=imgurl)
+    print(sql)
+    try:
+        cursor.execute(sql)
+        connect.commit()
+    except Exception as e:
+        print("SQLERRO", e)
+        pass
+
 def get_json():
     global i
     for url in urls:
@@ -64,7 +78,7 @@ def get_json():
         # print(value)
         list = value.get('result').get('items')
         for data in list:
-            img = data['img']  # 图片地址
+            imgurl = data['img']  # 图片地址
             h5url = data['h5url']  # 跳转链接
             itemComment = data['itemComment']  #
             itemName = data['itemName']
@@ -72,7 +86,6 @@ def get_json():
             sold = data['sold']
             i = i + 1
             print("{},{},{}".format(i, h5url, itemName))
-
-
+            add_mysql(itemName, price, sold, h5url, imgurl)
 if __name__ == '__main__':
     get_json()

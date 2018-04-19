@@ -23,7 +23,7 @@ class handle(object):
                 return echostr
             else:
                 return " "
-        except Exception,Argument:
+        except Exception as Argument:
                 return Argument
 
     def POST(self):

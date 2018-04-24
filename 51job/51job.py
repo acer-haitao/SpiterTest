@@ -57,18 +57,41 @@ def find_all_page(html):
 
 
 def find_txt(joburl):
-    time.sleep(3)
-    txt_html = url_input(joburl)
-    reg = re.compile(r'<div class="bmsg job_msg inbox">(.*?)<div class="mt10">', re.S)
-    txt_tmp1 = re.findall(reg, txt_html)
-    p = re.compile(r'<[^>]+>')
-    txt_tmp = p.sub('', str(txt_tmp1))
+    try:
+        #time.sleep(1)
+        txt_html = url_input(joburl)
+        reg = re.compile(r'<div class="bmsg job_msg inbox">(.*?)<div class="mt10">', re.S)
+        txt_tmp1 = re.findall(reg, txt_html)
+        p = re.compile(r'<[^>]+>')
+        txt_tmp = p.sub('', str(txt_tmp1))
 
-    tmp = txt_tmp.decode('raw_unicode-escape').encode('utf-8').replace("u'", '', 1)
-    txt = tmp.replace("']", '').replace("[", '', 1).replace('\\t', '').replace('\\n', '').replace('', '').replace('\\r',
-                                                                                                                  '')
-    print(txt)
-    return txt
+        tmp = txt_tmp.decode('raw_unicode-escape').encode('utf-8').replace("u'", '', 1)
+        txt = tmp.replace("']", '').replace("[", '', 1).replace('\\t', '').replace('\\n', '').replace('', '').replace('\\r','')
+
+        ###
+        reg_jobadress = re.compile(r'<div class="bmsg inbox">.*?</span>(.*?)</p>',re.S)
+        txt_adress = re.findall(reg_jobadress,txt_html)
+        txt_adress.append(txt)
+
+    except Exception as e:
+        print("TXTERRO:",e)
+        pass
+    return txt_adress
+
+def find_address(joburl):
+    try:
+        #time.sleep(1)
+        txt_html = url_input(joburl)
+        reg_jobadress = re.compile(r'<div class="bmsg inbox">.*?</span>(.*?)</p>',re.S)
+        txt_adress = re.findall(reg_jobadress,txt_html)
+
+        for tmp in txt_adress:
+            print(tmp)
+        #print(txt)
+    except Exception as e:
+        print("TXTERRO:",e)
+        pass
+    return tmp
 
 # 一个例子掌握xlwt,设计要求见README文档
 def set_style(name, height, bold=False):
@@ -105,20 +128,21 @@ def data_to_excel(filename, data_items, sheet1, workbook, jobtxt):
         pass
 
 
-def data_to_sqlite(id, job, company, address, wages, date, jobname, joburl):
+def data_to_sqlite(id, job, company, address, wages, date, jobname, joburl,jobtxt,jobaddress):
     """
     将信息存储到数据库
     """
     db = sqlite3.connect("D:\Python-Test\StuProject\db.sqlite3")
     cursor = db.cursor()  # OR IGNORE重复数据会跳过
-    sql = "insert  OR IGNORE into 'job51_job51'(job,company,address,wages,date,jobname,joburl) values (\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\");" % (
-        job, company, address, wages, date, jobname, joburl)
+    sql = "insert  OR IGNORE into 'job51_job51'(job,company,address,wages,date,jobname,joburl,jobtxt,jobaddress) values (\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\");" % (
+        job, company, address, wages, date, jobname, joburl,jobtxt,jobaddress)
     # sql = "insert OR IGNORE  into '51jobtest'(job,company,address,wages,date,jobname) values (\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\");" % ("job", "company", "address", "wages", "date", "jobname")
     try:
         cursor.execute(sql)
         db.commit()
     except Exception as e:
         print("SQLERRO:",e)
+        pass
 
 
 def data_to_sqlite_address(address):
@@ -135,6 +159,7 @@ def data_to_sqlite_address(address):
         db.commit()
     except Exception as e:
         print("SQLERRO:", e)
+        pass
 
 
 def data_to_sqlite_date(date):
@@ -151,6 +176,7 @@ def data_to_sqlite_date(date):
         db.commit()
     except Exception as e:
         print("SQLERRO:", e)
+        pass
 
 
 def data_to_sqlite_jobname(jobname):
@@ -167,6 +193,7 @@ def data_to_sqlite_jobname(jobname):
         db.commit()
     except Exception as e:
         print("SQLERRO:", e)
+        pass
 
 
 def data_to_mysql(id, job, company, address, wages, date, jobname, joburl):
@@ -205,38 +232,46 @@ def data_to_sqlite_jobwages(jobwages):
         db.commit()
     except Exception as e:
         print("SQLERRO:", e)
+        pass
 
 
 def print_items(data_items,jobname):
     """
     从正则匹配后的列表中获取信息存储打印
     """
-    global i
-    for data in data_items:
-        job = data[0]
-        company = data[2]
-        address = data[4]
-        wages = data[5]
-        date = data[6]
-        alljoburl = data[3]
-        thisjoburl = data[1]
-        jobnametest_id = jobname
-        i = i + 1
-        # jobtxt = find_txt(thisjoburl)
-        str1 = "[" + str(
-                i) + "] " + job + "--" + company + "--" + address + "--" + wages + "--" + date + "--" + thisjoburl + "\n"
-        data_to_txt(str1, jobname)  # 存到文本
-        data_to_sqlite(id, job, company, address, wages, date, jobname, thisjoburl)  #存到数据库
-        # data_to_sqlite(id, job, company, address, wages, date, jobname, thisjoburl, addresstest_id, jobdatetest_id,
-        #                jobnametest_id, jobwagestest_id)  #
-        # data_to_sqlite_address(address)
-        # data_to_sqlite_date(date)
-        # data_to_sqlite_jobname(jobname)
-        # data_to_sqlite_jobwages(wages)
-        data_to_mysql(id, job, company, address, wages, date, jobname, thisjoburl)
-        print(str1)
-        # return jobtxt
-
+    try:
+        global i
+        for data in data_items:
+            job = data[0]
+            company = data[2]
+            address = data[4]
+            wages = data[5]
+            date = data[6]
+            alljoburl = data[3]
+            thisjoburl = data[1]
+            jobnametest_id = jobname
+            i = i + 1
+            tmp = find_txt(thisjoburl)
+            jobtxt = tmp[1]
+            jobaddress = tmp[0]
+            print(jobaddress)
+            str1 = "[" + str(
+                    i) + "] " + job + "--" + company + "--" + address + "--" + wages + "--" + date + "--" + thisjoburl + "\n"
+            data_to_txt(str1, jobname)  # 存到文本
+            data_to_sqlite(id, job, company, address, wages, date, jobname, thisjoburl,jobtxt,jobaddress)  #存到数据库
+            # data_to_sqlite(id, job, company, address, wages, date, jobname, thisjoburl, addresstest_id, jobdatetest_id,
+            #                jobnametest_id, jobwagestest_id)  #
+            # data_to_sqlite_address(address)
+            # data_to_sqlite_date(date)
+            # data_to_sqlite_jobname(jobname)
+            # data_to_sqlite_jobwages(wages)
+            #data_to_mysql(id, job, company, address, wages, date, jobname, thisjoburl)
+            print(str1)
+            # return jobtxt
+            #print(jobtxt)
+    except Exception as e:
+        print("sqlERRO",e)
+        pass
 
 def urlformat(urlstart):
     """

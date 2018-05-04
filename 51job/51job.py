@@ -222,7 +222,7 @@ def data_to_txt(str,jobname):
 def data_to_sqlite_jobwages(jobwages):
     """
       将信息存储到数据库
-      """
+    """
     db = sqlite3.connect("D:\Python-Test\StuProject\db.sqlite3")
     cursor = db.cursor()  # OR IGNORE重复数据会跳过
     sql = "insert  OR IGNORE into 'job51_jobwages'(jobwages) values (\"%s\");" % (jobwages)
@@ -251,10 +251,15 @@ def print_items(data_items,jobname):
             thisjoburl = data[1]
             jobnametest_id = jobname
             i = i + 1
+
             tmp = find_txt(thisjoburl)
             jobtxt = tmp[1]
             jobaddress = tmp[0]
             print(jobaddress)
+
+            # jobtxt = '1'
+            # jobaddress = '2'
+
             str1 = "[" + str(
                     i) + "] " + job + "--" + company + "--" + address + "--" + wages + "--" + date + "--" + thisjoburl + "\n"
             data_to_txt(str1, jobname)  # 存到文本
@@ -295,19 +300,23 @@ def all_job_get():
     """
     输入多个职位名称及第一页url批量抓取
     """
-    for data in urldict:
-        jobname = data['jobname']
-        urlstart = data['urlstart']
-        html = url_input(urlstart)
-        all_page_num = int(find_all_page(html))
-        print("+++++++++++++++++%s++++++++++++++++++++" % (all_page_num))
-        urllist = get_page_html(all_page_num, urlstart)
-        for url in urllist:
-            html = url_input(url)
-            data_items = find_data(html)
-            print_items(data_items, jobname)
-        time.sleep(1)
-        i = 0#批量抓取后换个职位重新计数
+    try:
+        for data in urldict:
+            jobname = data['jobname']
+            urlstart = data['urlstart']
+            html = url_input(urlstart)
+            all_page_num = int(find_all_page(html))
+            print("+++++++++++++++++%s++++++++++++++++++++" % (all_page_num))
+            urllist = get_page_html(all_page_num, urlstart)
+            for url in urllist:
+                html = url_input(url)
+                data_items = find_data(html)
+                print_items(data_items, jobname)
+            time.sleep(1)
+            i = 0  # 批量抓取后换个职位重新计数
+    except Exception as e:
+        print("all_job_get:", e)
+        pass
 
 def one_job_get():
     """
